@@ -24,7 +24,9 @@ namespace ReManualMsConfigServices
 
         #region user
 
-        public static bool UserServicesPredicate(ServiceController s) => s.ServiceName.Contains(USER_LUID, StringComparison.OrdinalIgnoreCase);
+        public static bool UserServicesPredicate(ServiceController s)
+            => !string.IsNullOrWhiteSpace(USER_LUID)
+            && s.ServiceName.Contains(USER_LUID, StringComparison.OrdinalIgnoreCase);
 
         public static IEnumerable<string> UserServices = null;
 
@@ -77,7 +79,7 @@ namespace ReManualMsConfigServices
             var pressedKey = Console.ReadKey();
             Console.WriteLine("\n");
 
-            if(pressedKey.Key == ConsoleKey.Enter)
+            if (pressedKey.Key == ConsoleKey.Enter)
             {
                 return defaultOption;
             }
@@ -230,13 +232,27 @@ namespace ReManualMsConfigServices
 
         private static void RequestUserLUID()
         {
-            Console.Write("Deseja informar o LUID do usuário? [S / n] " );
+            Console.Write("Deseja informar o LUID do usuário? [S / n] ");
             var willTypeLUID = GetKeyOption(true);
 
-            while (willTypeLUID && string.IsNullOrWhiteSpace(USER_LUID))
+            if (willTypeLUID)
             {
-                Console.Write("LUID (ver em services.msc): ");
-                USER_LUID = Console.ReadLine();
+                while (willTypeLUID && string.IsNullOrWhiteSpace(USER_LUID))
+                {
+                    Console.Write("LUID (ver em services.msc): ");
+                    USER_LUID = Console.ReadLine();
+                }
+            }
+            else
+            {
+                Console.Write("O não preenchimento do LUID altera os serviços de usuário que estão 'Disabled' para 'Manual'. Tem certeza disso? [s / N]");
+                var continueWithoutLUID = GetKeyOption();
+
+                if (!continueWithoutLUID)
+                {
+                    Console.Clear();
+                    RequestUserLUID();
+                }
             }
 
             Console.WriteLine("\n");
